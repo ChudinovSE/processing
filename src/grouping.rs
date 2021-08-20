@@ -3,9 +3,13 @@ use crate::date::TimeInterval;
 use crate::volume::Volume;
 use crate::info::TestInfo;
 
+/// There are a valid methods for aggregation
 pub enum MethodGroup {
+	/// by mean volume in time interval
 	Mean,
+	/// by last volume in time interval
 	Last,
+	/// by first volume in time interval
 	First,
 }
 
@@ -243,6 +247,9 @@ fn calc_first_year (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 	return ret_vol
 }
 
+/// This function aggregation data from input vector for 
+/// input time interval and return new vector of ```processing::info::TestInfo``` 
+/// exemplars. 
 pub fn grouping(
 			info: &Vec<TestInfo>, 
 			method: MethodGroup, 

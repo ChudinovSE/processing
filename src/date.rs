@@ -1,11 +1,16 @@
 use std::cmp::Ordering;
 use rand::Rng;
 
+/// There are a valid intervals of time
 pub enum TimeInterval{
+	/// month
 	Month,
+	/// year
 	Year,
 }
 
+/// This structure saved date in Russian format
+/// # Warning! in this test project all months have 31 days! 
 #[derive(Copy, Clone)]
 pub struct DateRU{
 	day: u8,
@@ -14,6 +19,8 @@ pub struct DateRU{
 }
 
 impl DateRU{
+	/// This method generating and returning new exemplar 
+	/// of DateRU with value start of unix time (01.01.1970)
 	pub fn new_default() -> DateRU {
 		DateRU {
 			day: 1,
@@ -22,6 +29,11 @@ impl DateRU{
 		}
 	}
 
+	/// This method generating and returning new exemplar 
+	/// of DateRU with value from input parameters: day, month and year
+
+	/// # Panics
+	/// Function panic if day > 31 or month > 12
 	pub fn new(d: u8, m: u8, y: u32) -> DateRU {
 		if d > 31
 			|| m > 12 {
@@ -34,7 +46,8 @@ impl DateRU{
 			year: y,
 		}
 	}
-
+	/// This method generating and returning new exemplar 
+	/// of DateRU with random value
 	pub fn new_rnd() -> DateRU {
 		DateRU {
 			day: rand::thread_rng().gen_range(1..32),
@@ -43,6 +56,8 @@ impl DateRU{
 		}
 	}
 
+	/// This method change value exemplar DateRU to input 
+	/// parameters: day, month and year
 	pub fn set_date(&mut self, 	d: u8, m: u8, y: u32) {
 		if d > 31
 			|| m > 12 {
@@ -54,12 +69,27 @@ impl DateRU{
 		self.year = y;
 	}
 
+	/// This method return tuple (u8 u8 u32) from value 
+	/// (day, month and year)
 	pub fn get_date(&self) -> (u8, u8, u32) {
 		(self.day,
 		 self.month,
 		 self.year)
 	}
 
+	/// This method correct increase value of exemplar for 1 day 
+	/// if it need, month and year will be increase too
+	/// # Example
+	/// ```
+	/// use processing::date::DateRU;
+	///
+	/// let mut date = DateRU::new_default();
+	/// assert_eq!(date.get_date(), (1, 1, 1970));
+	///
+	/// date.set_date(31, 8, 2021);
+	/// date.add_day();
+	/// assert_eq!(date.get_date(), (1, 9, 2021));
+	/// ```
 	pub fn add_day(&mut self) {
 		self.day += 1;
 
@@ -74,6 +104,7 @@ impl DateRU{
 		};
 	}
 
+	/// This method return string with value for correct print
 	pub fn print_date(&self) -> String {
 		format!("{}.{}.{}", self.day, self.month, self.year)
 	}

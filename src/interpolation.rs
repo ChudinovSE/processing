@@ -1,10 +1,12 @@
 use crate::volume::Volume;
 use crate::info::TestInfo;
 
-
+/// There are a valid methods for interpolation
 pub enum MethodInter {
+	/// Line interpolation
 	Line,
-	Poly3,
+	/// Interpolation for polynom of 3 degree (TO DO)
+	Poly3, 
 }
 
 fn calc_step (first: &TestInfo, second: &TestInfo) -> (Volume, u32) {
@@ -53,6 +55,9 @@ fn calc_line(info: &Vec<TestInfo>) -> Vec<TestInfo> {
 	ret_vol
 }
 
+/// This function interpolation data from input vector for 
+/// all days and return new vector of ```processing::info::TestInfo``` 
+/// exemplars. Last element of input vector is ignored
 pub fn interpolation(
 	info: &Vec<TestInfo>, 
 	method: MethodInter, 
