@@ -1,3 +1,4 @@
+/*
 use crate::volume::Volume;
 use crate::info::TestInfo;
 
@@ -13,8 +14,8 @@ fn calc_step (first: &TestInfo, second: &TestInfo) -> (Volume, u32) {
 	let (_, first_month, first_year) = first.date.get_date();
 	let (_, second_month, second_year) = second.date.get_date();
 
-	let mut d_month;
-	let mut d_year;
+	let d_month;
+	let d_year;
 
 	if (second_month as i32 - first_month as i32) < 0 {
 		d_month = 1;
@@ -74,3 +75,4 @@ pub fn interpolation(
 		},
 	}
 }
+*/

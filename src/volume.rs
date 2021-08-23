@@ -1,8 +1,12 @@
 use std::ops::AddAssign;
 use std::ops::Sub;
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
 
 /// This structure saved volume of info
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Volume {
 	pub vol1: f64,
 	pub vol2: f64,
@@ -21,22 +25,15 @@ impl Volume {
 	}
 
 	/// This method return resuly of division volume on input parametr
-	pub fn mean_vol(&mut self, numb: f64) {
-		*self = Self {
+	pub fn mean_vol(self, numb: f64) -> Volume {
+		Volume {
 			vol1: self.vol1 / numb,
 			vol2: self.vol2 / numb,
 			vol3: self.vol3 / numb,
 		}
 	}
-
-	/// This method return string with value for correct print
-	pub fn print_volume(&self) -> String {
-		format!("{} {} {}", 
-			self.vol1, 
-			self.vol2, 
-			self.vol3)
-	}
 }
+
 
 impl AddAssign for Volume {
 	fn add_assign(&mut self, other: Self) {
@@ -58,4 +55,14 @@ impl Sub for Volume {
 			vol3: self.vol3 - other.vol3,
 		}
 	}
+}
+
+impl fmt::Display for Volume {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {}", 
+        	self.vol1,
+        	self.vol2,
+        	self.vol3,
+        	)
+    }
 }

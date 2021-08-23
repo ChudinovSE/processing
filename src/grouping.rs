@@ -1,7 +1,9 @@
-use crate::date::DateRU;
-use crate::date::TimeInterval;
 use crate::volume::Volume;
 use crate::info::TestInfo;
+use crate::info::TimeInterval;
+
+
+
 
 /// There are a valid methods for aggregation
 pub enum MethodGroup {
@@ -15,6 +17,7 @@ pub enum MethodGroup {
 
 fn calc_mean_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 
+/*
 	let mut ret_vol: Vec<TestInfo> = Vec::new();
 	let  (_, mut month, mut year) = info[0].date.get_date();
 	let mut vol_sum = Volume::new(); 
@@ -54,10 +57,12 @@ fn calc_mean_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 			});
 	}
 
-	ret_vol
+	ret_vol*/
+	todo!()
 }
 
 fn calc_mean_year(info: &Vec<TestInfo>) -> Vec<TestInfo> {
+	/*
 	let mut ret_vol: Vec<TestInfo> = Vec::new();
 
 	let (_, _, mut year) = info[0].date.get_date();
@@ -97,11 +102,12 @@ fn calc_mean_year(info: &Vec<TestInfo>) -> Vec<TestInfo> {
 			});
 	}
 
-	ret_vol
+	ret_vol*/
+	todo!()
 }
 
 fn calc_last_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
-
+/*
 	let mut ret_vol: Vec<TestInfo> = Vec::new();
 
 	let (_, mut month, mut year) = info[0].date.get_date();
@@ -136,9 +142,12 @@ fn calc_last_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 			}
 
 	return ret_vol
+	*/
+	todo!()
 }
 
 fn calc_last_year (info: &Vec<TestInfo>) -> Vec<TestInfo> {
+	/*
 
 	let mut ret_vol: Vec<TestInfo> = Vec::new();
 
@@ -174,46 +183,25 @@ fn calc_last_year (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 			}
 
 	return ret_vol
+	*/
+	todo!()
 }
 
-fn calc_first_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
+fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-
-	let (_, mut month, mut year) = info[0].date.get_date();
-	let mut vol_first = info[0].vol;
-
-	for item in info {
-		let (_, it_month, it_year) = item.date.get_date();
-		if month != it_month {
-			ret_vol.push(TestInfo{
-				date: DateRU::new(
-						1,
-						month,
-						year
-				),
-				vol: vol_first,
-			});
-			month = it_month;
-			year = it_year;
-			vol_first = item.vol;
+	todo!()
+/*
+	let mut ret_vol = Vec::new();
+	ret_vol.push(info[0]);
+	for i in 1..=info.len() {
+		for item in ret_vol {
+			if item
 		}
-	};
-
-	ret_vol.push(TestInfo{
-				date: DateRU::new(
-						1,
-						month,
-						year
-				),
-				vol: vol_first,
-			});
-
-	return ret_vol
+	}*/
 }
 
 fn calc_first_year (info: &Vec<TestInfo>) -> Vec<TestInfo> {
-
+/*
 	let mut ret_vol: Vec<TestInfo> = Vec::new();
 
 	let (_, _, mut year) = info[0].date.get_date();
@@ -244,14 +232,15 @@ fn calc_first_year (info: &Vec<TestInfo>) -> Vec<TestInfo> {
 				vol: vol_first,
 			});
 	
-	return ret_vol
+	return ret_vol*/
+	todo!()
 }
 
 /// This function aggregation data from input vector for 
 /// input time interval and return new vector of ```processing::info::TestInfo``` 
 /// exemplars. 
 pub fn grouping(
-			info: &Vec<TestInfo>, 
+			info: &[TestInfo], 
 			method: MethodGroup, 
 			time: TimeInterval
 			) -> Vec<TestInfo> {
@@ -260,27 +249,27 @@ pub fn grouping(
 		MethodGroup::Mean => {
 			match time {
 				TimeInterval::Year => {
-					calc_mean_year(info)
+					todo!()
 				},
 				TimeInterval::Month => {
-					calc_mean_month(info)
+					todo!()
 				}
 			}
 		},
 		MethodGroup::Last => {
 			match time {
 				TimeInterval::Year => {
-					calc_last_year(info)
+					todo!()
 				},
 				TimeInterval::Month => {
-					calc_last_month(info)
+					todo!()
 				}
 			}
 		},
 		MethodGroup::First => {
 			match time {
 				TimeInterval::Year => {
-					calc_first_year(info)
+					todo!()
 				},
 				TimeInterval::Month => {
 					calc_first_month(info)
@@ -288,4 +277,53 @@ pub fn grouping(
 			}
 		}
 	}
+}
+
+
+#[test]
+fn test_one () {
+
+	let raw_data = fs::read_to_string("test_one.json").unwrap();
+
+    let pars_data = TestInfo::pars_info(&raw_data);
+
+    let month_data = grouping(&pars_data, 
+        MethodGroup::First, 
+        TimeInterval::Month);
+
+    assert_eq!(pars_data, month_data);
+}
+
+#[test]
+fn test_sort () {
+
+	let raw_data = fs::read_to_string("test_sort.json").unwrap();
+	let raw_ans = fs::read_to_string("test_sort_ans.json").unwrap();
+
+
+    let pars_data = TestInfo::pars_info(&raw_data);
+    let pars_ans = TestInfo::pars_info(&raw_ans);
+
+    let month_data = grouping(&pars_data, 
+        MethodGroup::First, 
+        TimeInterval::Month);
+
+    assert_eq!(pars_ans, month_data);
+}
+
+#[test]
+fn test_unsort () {
+
+	let raw_data = fs::read_to_string("test_unsort.json").unwrap();
+	let raw_ans = fs::read_to_string("test_unsort_ans.json").unwrap();
+
+
+    let pars_data = TestInfo::pars_info(&raw_data);
+    let pars_ans = TestInfo::pars_info(&raw_ans);
+
+    let month_data = grouping(&pars_data, 
+        MethodGroup::First, 
+        TimeInterval::Month);
+
+    assert_eq!(pars_ans, month_data);
 }

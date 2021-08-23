@@ -1,13 +1,41 @@
-use std::fs;
+// use chrono::prelude::*;
+use chrono::{NaiveDate, Datelike, Weekday, Duration};
+// use serde::{Deserialize, Serialize};
+// use serde_json::{Result, Value};
 
+use std::fs;
+use processing::volume::Volume;
 use processing::info::TestInfo;
+use processing::info::TimeInterval;
 use processing::grouping::MethodGroup;
 use processing::grouping::grouping;
-use processing::interpolation::MethodInter;
-use processing::interpolation::interpolation;
-use processing::date::TimeInterval;
+// use processing::interpolation::MethodInter;
+// use processing::interpolation::interpolation;
+
+
+
+
+
 
 fn main() {
+    // Read and parse file with random info
+    let raw_data = fs::read_to_string("test_info.json").unwrap();
+
+    let pars_data = TestInfo::pars_info(&raw_data);
+    
+    let month_data = grouping(&pars_data[..], 
+        MethodGroup::First, 
+        TimeInterval::Month);
+    println!("Aggregate info for months, by first volume:");
+    for i in 0..5 {
+        println!("{}", month_data[i]);
+    }
+    println!("..........................");
+    println!("");
+
+}
+
+    /*  
 	// Read and parse file with random info
     let raw_data = fs::read_to_string("rnd_data.txt").unwrap();
     let mut pars_data: Vec<TestInfo> = TestInfo::pars_info(&raw_data);
@@ -56,5 +84,7 @@ fn main() {
     }
     println!("..........................");
     println!("");
+    
 
 }
+*/
