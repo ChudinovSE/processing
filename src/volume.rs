@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 
 /// This structure saved volume of info
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct Volume {
 	pub vol1: f64,
 	pub vol2: f64,

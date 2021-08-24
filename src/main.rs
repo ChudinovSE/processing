@@ -18,11 +18,32 @@ use processing::grouping::grouping;
 
 
 fn main() {
+
+/*
+    let a = NaiveDate::from_ymd(2010, 1, 1);
+    let b = NaiveDate::from_ymd(2010, 2, 1);
+
+    println!("{}", a.month() );
+    println!("{}", b.month() );
+*/
+
+
     // Read and parse file with random info
     let raw_data = fs::read_to_string("test_info.json").unwrap();
 
-    let pars_data = TestInfo::pars_info(&raw_data);
-    
+    let pars_data: Vec<TestInfo> = serde_json::from_str(&raw_data).unwrap();
+
+    println!("{}", pars_data.len());
+
+    let month_data = grouping(&pars_data, 
+            MethodGroup::Last, 
+            TimeInterval::Year);
+    for i in 0..month_data.len(){
+        println!("{}", month_data[i]);
+    }
+
+
+    /*
     let month_data = grouping(&pars_data[..], 
         MethodGroup::First, 
         TimeInterval::Month);
@@ -31,7 +52,7 @@ fn main() {
         println!("{}", month_data[i]);
     }
     println!("..........................");
-    println!("");
+    println!("");*/
 
 }
 

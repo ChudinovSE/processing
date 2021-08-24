@@ -8,7 +8,7 @@ use std::fmt;
 
 
 /// This structure saved test info
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
 pub struct TestInfo {
 	pub date: NaiveDate,
 	pub vol: Volume,
@@ -24,18 +24,15 @@ impl TestInfo {
 			vol: Volume::new(),
 		}
 	}
-
+/*
     /// This method parse string with raw data (from file, for example)
     /// and return vector of TestInfo
     /// # Warning
     /// raw data must have format: "d.m.y. vol1 vol2 vol3 \"
 	pub fn pars_info (raw_info: &String) -> Vec<TestInfo> {
-        raw_info
-        .split("\n")
-        .filter(|s| !s.is_empty())
-        .map(|s|serde_json::from_str(&s).unwrap())
-        .collect()
-	}
+        
+        serde_json::from_str(raw_info).unwrap()
+    }*/
 }
 
 impl fmt::Display for TestInfo {
@@ -46,6 +43,7 @@ impl fmt::Display for TestInfo {
             )
     }
 }
+
 
 /// There are a valid intervals of time
 pub enum TimeInterval{
