@@ -24,6 +24,7 @@ fn main() {
     let month_data = calc_mean_month(&pars_data);
     let duration = start.elapsed();
     println!("Without ryon {:?}", duration);
+    let start = Instant::now();
     let month_data = calc_mean_month_paral(&pars_data);
     let duration = start.elapsed();
     println!("With ryon {:?}", duration);
