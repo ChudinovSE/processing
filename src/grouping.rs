@@ -21,24 +21,47 @@ pub enum MethodGroup {
 
 pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
-	let tmp = Mutex::new(HashMap::<(i32, u32), (TestInfo, u32)>::new());
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
 
-	let _: Vec<()> = info.par_iter().map(|it| {
-		let mut tmpl = tmp.lock().unwrap();
+	let tmp: Vec<HashMap::<(i32, u32), (TestInfo, u32)>> = parts.par_iter().map(|part|{
+		let mut ltmp = HashMap::<(i32, u32), (TestInfo, u32)>::new();
+		let _: Vec<()> = part.iter().map(|it| {
 		let ym = (it.date.year(), it.date.month());
-		match tmpl.get_mut(&ym) {
+		match ltmp.get_mut(&ym) {
 			Some(x) => {
 						x.0.vol += it.vol;
 						x.1 += 1;
 					},
 			None => {
-					tmpl.insert(ym,(*it, 1));
-			}
-		};
-	}
-	).collect();
+					ltmp.insert(ym,(*it, 1));
+				}
+			};
+		}).collect();
+		ltmp}).collect();
 
-	let mut ret_vol: Vec<TestInfo> = tmp.lock().unwrap().par_iter_mut()
+	println!("{}", tmp.len());
+
+	let mut tmp_rez = HashMap::<(i32, u32), (TestInfo, u32)>::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						x.0.vol += val.0.vol;
+						x.1 += 1;
+					},
+			None => {
+					tmp_rez.insert(*key,(val.0, val.1));
+				}
+			};
+		};
+	}).collect();
+
+	let mut ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
 				.map(|(_date, mut info)| {
 					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
 					info.0

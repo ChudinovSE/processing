@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 fn main() {
 
     // Read and parse file with random info
-    let raw_data = fs::read_to_string("test_info.json").expect("Error read file");
+    let raw_data = fs::read_to_string("test_info_million.json").expect("Error read file");
 
     let pars_data = TestInfo::parse_info(&raw_data).expect("Error parsing json");
 
@@ -29,10 +29,10 @@ fn main() {
     let duration = start.elapsed();
     println!("With ryon {:?}", duration);
 
-    /*
-    for i in 0..month_data.len(){
-        println!("{}", month_data[i]);
-    }*/
+    
+    // for i in 0..month_data.len(){
+    //     println!("{}", month_data[i]);
+    // }
 
 
 }
