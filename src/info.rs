@@ -24,16 +24,20 @@ impl TestInfo {
 			vol: Volume::new(),
 		}
 	}
-/*
+
     /// This method parse string with raw data (from file, for example)
     /// and return vector of TestInfo
     /// # Warning
     /// raw data must have format: "d.m.y. vol1 vol2 vol3 \"
-	pub fn pars_info (raw_info: &String) -> Vec<TestInfo> {
-        
-        serde_json::from_str(raw_info).unwrap()
-    }*/
+	pub fn parse_info (raw_info: &String) -> Result<Vec<TestInfo>, serde_json::Error> {
+       let res = serde_json::from_str(raw_info);
+        match res {
+            Ok (_) => res,
+            Err(e) => Err(e),
+        }
+    }
 }
+
 
 impl fmt::Display for TestInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

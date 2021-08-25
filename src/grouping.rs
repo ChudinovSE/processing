@@ -1,6 +1,6 @@
-use std::fs;
 use chrono::prelude::*;
-use crate::volume::Volume;
+use std::collections::HashMap;
+
 use crate::info::TestInfo;
 use crate::info::TimeInterval;
 
@@ -17,179 +17,171 @@ pub enum MethodGroup {
 	First,
 }
 
-fn calc_mean_month (info: &Vec<TestInfo>) -> Vec<TestInfo> {
-/*
-let mut flag_new = true;
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-	ret_vol.push(info[0]);
-	for i in 1..info.len() {
-		for j in 0..ret_vol.len() {
-			if ret_vol[j].date.year() == info[i].date.year(){
-				if ret_vol[j].date.month() == info[i].date.month(){
-					if ret_vol[j].date.day() < info[i].date.day(){
-						std::mem::replace(&mut ret_vol[j], info[i]);
-					};
-					flag_new = false;
-				};
-			};
-		}
-		if flag_new {
-			ret_vol.push(info[i]);
-		}
-		flag_new = true;
+fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	let mut tmp = HashMap::<(i32, u32), (TestInfo, u32)>::new();
+
+	let _: Vec<()> = info.iter().map(|it| {
+		let ym = (it.date.year(), it.date.month());
+		match tmp.get_mut(&ym) {
+			Some(x) => {
+						x.0.vol += it.vol;
+						x.1 += 1;
+					},
+			None => {
+					tmp.insert(ym,(*it, 1));
+			}
+		};
 	}
+	).collect();
+
+	let mut ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, mut info)| {
+					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
+					info.0
+				})
+				.collect();
+
 	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
-	ret_vol*/
+	ret_vol
 }
 
-fn calc_mean_year(info: &Vec<TestInfo>) -> Vec<TestInfo> {
-	/*
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
+fn calc_mean_year(info: &[TestInfo]) -> Vec<TestInfo> {
 
-	let (_, _, mut year) = info[0].date.get_date();
-	let mut vol_sum = Volume::new(); 
-	let mut count = 0.0;
+	let mut tmp = HashMap::<i32, (TestInfo, u32)>::new();
 
-	for item in info {
-		let (_, _, it_year) = item.date.get_date();
-		if year == it_year {
-			vol_sum +=item.vol;
-			count += 1.0;
-		} else {
-			vol_sum.mean_vol(count);
-			ret_vol.push(TestInfo{
-				date: DateRU::new(
-					1,
-					1,
-					year
-				),
-				vol: vol_sum,
-			});
-			count = 0.0;
-			vol_sum = Volume::new();
-			year = it_year;
-		}
-	};
-
-	if count != 0.0 {
-		vol_sum.mean_vol(count);
-		ret_vol.push(TestInfo{
-				date: DateRU::new(
-					1,
-					1,
-					year
-				),
-				vol: vol_sum,
-			});
+	let _: Vec<()> = info.iter().map(|it| {
+		match tmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						x.0.vol += it.vol;
+						x.1 += 1;
+					},
+			None => {
+					tmp.insert(it.date.year(),(*it, 1));
+			}
+		};
 	}
+	).collect();
 
-	ret_vol*/
-	todo!()
+	let ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, mut info)| {
+					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
+					info.0
+				})
+				.collect();
+	ret_vol
 }
 
 fn calc_last_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
-let mut flag_new = true;
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-	ret_vol.push(info[0]);
-	for i in 1..info.len() {
-		for j in 0..ret_vol.len() {
-			if ret_vol[j].date.year() == info[i].date.year(){
-				if ret_vol[j].date.month() == info[i].date.month(){
-					if ret_vol[j].date.day() < info[i].date.day(){
-						std::mem::replace(&mut ret_vol[j], info[i]);
-					};
-					flag_new = false;
-				};
-			};
-		}
-		if flag_new {
-			ret_vol.push(info[i]);
-		}
-		flag_new = true;
+	let mut tmp = HashMap::<(i32, u32), TestInfo>::new();
+
+	let _: Vec<()> = info.iter().map(|it| {
+		let ym = (it.date.year(), it.date.month());
+		match tmp.get_mut(&ym) {
+			Some(x) => {
+						if x.date.day() < it.date.day() {
+							*x = *it;
+						}
+					},
+			None => {
+					tmp.insert(ym,*it);
+			}
+		};
 	}
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+	).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, info)| info)
+				.collect();
 	ret_vol
 }
 
 fn calc_last_year (info: &[TestInfo]) -> Vec<TestInfo> {
 
-let mut flag_new = true;
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-	ret_vol.push(info[0]);
-	for i in 1..info.len() {
-		for j in 0..ret_vol.len() {
-			if ret_vol[j].date.year() == info[i].date.year(){
-				if ret_vol[j].date.month() < info[i].date.month(){
-					std::mem::replace(&mut ret_vol[j], info[i]);
-				};
-				if ret_vol[j].date.month() == info[i].date.month(){
-					if ret_vol[j].date.day() < info[i].date.day(){
-						std::mem::replace(&mut ret_vol[j], info[i]);
-					};
-				};
-				flag_new = false;
-			};
-		}
-		if flag_new {
-			ret_vol.push(info[i]);
-		}
-		flag_new = true;
+	let mut tmp = HashMap::<i32, TestInfo>::new();
+
+	let _: Vec<()> = info.iter().map(|it| {
+		match tmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						if x.date.month() == it.date.month() {
+							if x.date.day() < it.date.day() {
+								*x = *it;
+							}
+						}
+						if x.date.month() < it.date.month() {
+							*x = *it;
+						}
+					},
+			None => {
+					tmp.insert(it.date.year(),*it);
+			}
+		};
 	}
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+	).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, info)| info)
+				.collect();
 	ret_vol
 }
 
+
 fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
-	
-	let mut flag_new = true;
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-	ret_vol.push(info[0]);
-	for i in 1..info.len() {
-		for j in 0..ret_vol.len() {
-			if ret_vol[j].date.year() == info[i].date.year(){
-				if ret_vol[j].date.month() == info[i].date.month(){
-					if ret_vol[j].date.day() > info[i].date.day(){
-						std::mem::replace(&mut ret_vol[j], info[i]);
-					};
-					flag_new = false;
-				};
-			};
-		}
-		if flag_new {
-			ret_vol.push(info[i]);
-		}
-		flag_new = true;
+
+	let mut tmp = HashMap::<(i32, u32), TestInfo>::new();
+
+	let _: Vec<()> = info.iter().map(|it| {
+		let ym = (it.date.year(), it.date.month());
+		match tmp.get_mut(&ym) {
+			Some(x) => {
+						if x.date.day() > it.date.day() {
+							*x = *it;
+						}
+					},
+			None => {
+					tmp.insert(ym,*it);
+			}
+		};
 	}
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+	).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, info)| info)
+				.collect();
 	ret_vol
+
 }
 
 fn calc_first_year (info: &[TestInfo]) -> Vec<TestInfo> {
 
-	let mut flag_new = true;
-	let mut ret_vol: Vec<TestInfo> = Vec::new();
-	ret_vol.push(info[0]);
-	for i in 1..info.len() {
-		for j in 0..ret_vol.len() {
-			if ret_vol[j].date.year() == info[i].date.year(){
-				if ret_vol[j].date.month() > info[i].date.month(){
-					std::mem::replace(&mut ret_vol[j], info[i]);
-				};
-				if ret_vol[j].date.month() == info[i].date.month(){
-					if ret_vol[j].date.day() > info[i].date.day(){
-						std::mem::replace(&mut ret_vol[j], info[i]);
-					};
-				};
-				flag_new = false;
-			};
-		}
-		if flag_new {
-			ret_vol.push(info[i]);
-		}
-		flag_new = true;
+	let mut tmp = HashMap::<i32, TestInfo>::new();
+
+	let _: Vec<()> = info.iter().map(|it| {
+		match tmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						if x.date.month() == it.date.month() {
+							if x.date.day() > it.date.day() {
+								*x = *it;
+							}
+						}
+						if x.date.month() > it.date.month() {
+							*x = *it;
+						}
+					},
+			None => {
+					tmp.insert(it.date.year(),*it);
+			}
+		};
 	}
+	).collect();
+
+	let mut ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, info)| info)
+				.collect();
+
 	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+
 	ret_vol
 }
 
@@ -206,10 +198,10 @@ pub fn grouping(
 		MethodGroup::Mean => {
 			match time {
 				TimeInterval::Year => {
-					todo!()
+					calc_mean_year(info)
 				},
 				TimeInterval::Month => {
-					todo!()
+					calc_mean_month(info)
 				}
 			}
 		},
@@ -239,7 +231,7 @@ pub fn grouping(
 
 #[test]
 fn test_one () {
-
+	use std::fs;
 	let raw_data = fs::read_to_string("test_one.json").unwrap();
 
     let pars_data: Vec<TestInfo> = serde_json::from_str(&raw_data).unwrap();
@@ -253,21 +245,23 @@ fn test_one () {
 
 #[test]
 fn test_sort () {
-
+	use std::fs;
 	let raw_data = fs::read_to_string("test_sort.json").unwrap();
 
 	let pars_data: Vec<TestInfo> = serde_json::from_str(&raw_data).unwrap();
 
-    let month_data = grouping(&pars_data, 
+    let mut month_data = grouping(&pars_data, 
         MethodGroup::First, 
         TimeInterval::Month);
+
+    month_data.sort_by(|a, b| a.date.cmp(&b.date));
 
     assert_eq!(pars_data, month_data);
 }
 
 #[test]
 fn test_unsort () {
-
+	use std::fs;
 	let raw_data = fs::read_to_string("test_unsort.json").unwrap();
 	let raw_ans = fs::read_to_string("test_unsort_ans.json").unwrap();
 
@@ -275,9 +269,11 @@ fn test_unsort () {
     let pars_data: Vec<TestInfo> = serde_json::from_str(&raw_data).unwrap();
 	let pars_ans: Vec<TestInfo> = serde_json::from_str(&raw_ans).unwrap();
 
-    let month_data = grouping(&pars_data, 
+    let mut month_data = grouping(&pars_data, 
         MethodGroup::First, 
         TimeInterval::Month);
+
+    month_data.sort_by(|a, b| a.date.cmp(&b.date));
 
     assert_eq!(pars_ans, month_data);
 }
