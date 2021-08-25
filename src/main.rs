@@ -2,9 +2,11 @@ use std::fs;
 
 use processing::info::TestInfo;
 use processing::info::TimeInterval;
-use processing::grouping::MethodGroup;
-use processing::grouping::grouping;
+use processing::grouping::calc_mean_month;
+use processing::grouping::calc_mean_month_paral;
+// use processing::grouping::grouping;
 
+use std::time::{Duration, Instant};
 
 
 
@@ -18,13 +20,18 @@ fn main() {
     let pars_data = TestInfo::parse_info(&raw_data).expect("Error parsing json");
 
     println!("{}", pars_data.len());
+    let start = Instant::now();
+    let month_data = calc_mean_month(&pars_data);
+    let duration = start.elapsed();
+    println!("Without ryon {:?}", duration);
+    let month_data = calc_mean_month_paral(&pars_data);
+    let duration = start.elapsed();
+    println!("With ryon {:?}", duration);
 
-    let month_data = grouping(&pars_data, 
-            MethodGroup::Mean, 
-            TimeInterval::Month);
+    /*
     for i in 0..month_data.len(){
         println!("{}", month_data[i]);
-    }
+    }*/
 
 
 }

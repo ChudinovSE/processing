@@ -1,5 +1,7 @@
 use chrono::prelude::*;
 use std::collections::HashMap;
+use rayon::prelude::*;
+use std::sync::Mutex;
 
 use crate::info::TestInfo;
 use crate::info::TimeInterval;
@@ -17,7 +19,37 @@ pub enum MethodGroup {
 	First,
 }
 
-fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
+pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	let tmp = Mutex::new(HashMap::<(i32, u32), (TestInfo, u32)>::new());
+
+	let _: Vec<()> = info.par_iter().map(|it| {
+		let mut tmpl = tmp.lock().unwrap();
+		let ym = (it.date.year(), it.date.month());
+		match tmpl.get_mut(&ym) {
+			Some(x) => {
+						x.0.vol += it.vol;
+						x.1 += 1;
+					},
+			None => {
+					tmpl.insert(ym,(*it, 1));
+			}
+		};
+	}
+	).collect();
+
+	let mut ret_vol: Vec<TestInfo> = tmp.lock().unwrap().par_iter_mut()
+				.map(|(_date, mut info)| {
+					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
+					info.0
+				})
+				.collect();
+
+	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+	ret_vol
+}
+
+pub fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	let mut tmp = HashMap::<(i32, u32), (TestInfo, u32)>::new();
 
