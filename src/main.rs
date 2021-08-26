@@ -1,12 +1,11 @@
 use std::fs;
 
 use processing::info::TestInfo;
-use processing::info::TimeInterval;
-use processing::grouping::calc_mean_month;
-use processing::grouping::calc_mean_month_paral;
-// use processing::grouping::grouping;
+use processing::grouping::MethodGroup;
+use processing::grouping::TimeInterval;
+use processing::grouping::grouping;
 
-use std::time::{Duration, Instant};
+// use std::time::Instant;
 
 
 
@@ -15,29 +14,37 @@ use std::time::{Duration, Instant};
 fn main() {
 
     // Read and parse file with random info
-    let raw_data = fs::read_to_string("test_info_million.json").expect("Error read file");
+    let raw_data = fs::read_to_string("test_info.json").expect("Error read file");
 
     let pars_data = TestInfo::parse_info(&raw_data).expect("Error parsing json");
 
+    let mut month_data = grouping(&pars_data, 
+        MethodGroup::Mean, 
+        TimeInterval::Month);
+
+    month_data.sort_by(|a, b| a.date.cmp(&b.date));
+    println!("Aggregate info for months, by first volume:");
+    for i in 0..5 {
+        println!("{}", month_data[i]);
+    }
+
+/*
     println!("{}", pars_data.len());
     let start = Instant::now();
-    let month_data = calc_mean_month(&pars_data);
+    let _month_data = calc_mean_month(&pars_data);
     let duration = start.elapsed();
     println!("Without ryon {:?}", duration);
     let start = Instant::now();
-    let month_data = calc_mean_month_paral(&pars_data);
+    let _month_data = calc_mean_month_paral(&pars_data);
     let duration = start.elapsed();
     println!("With ryon {:?}", duration);
 
-    
+    */
     // for i in 0..month_data.len(){
     //     println!("{}", month_data[i]);
     // }
 
-
-}
-
-    /*  
+     /*
 	// Read and parse file with random info
     let raw_data = fs::read_to_string("rnd_data.txt").unwrap();
     let mut pars_data: Vec<TestInfo> = TestInfo::pars_info(&raw_data);
@@ -85,8 +92,7 @@ fn main() {
     	println!("{}", inter_data[i].print_line());
     }
     println!("..........................");
-    println!("");
+    println!("");*/
     
 
 }
-*/

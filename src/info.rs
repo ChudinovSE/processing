@@ -1,8 +1,6 @@
-// use crate::date::DateRU;
 use crate::volume::Volume;
 use serde::{Deserialize, Serialize};
 
-//use chrono::prelude::*;
 use chrono::{NaiveDate};
 use std::fmt;
 
@@ -46,13 +44,4 @@ impl fmt::Display for TestInfo {
             self.vol
             )
     }
-}
-
-
-/// There are a valid intervals of time
-pub enum TimeInterval{
-    /// month
-    Month,
-    /// year
-    Year,
 }

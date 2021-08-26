@@ -1,13 +1,16 @@
 use chrono::prelude::*;
 use std::collections::HashMap;
 use rayon::prelude::*;
-use std::sync::Mutex;
 
 use crate::info::TestInfo;
-use crate::info::TimeInterval;
 
-
-
+/// There are a valid intervals of time
+pub enum TimeInterval{
+    /// month
+    Month,
+    /// year
+    Year,
+}
 
 /// There are a valid methods for aggregation
 pub enum MethodGroup {
@@ -19,7 +22,10 @@ pub enum MethodGroup {
 	First,
 }
 
-pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<(i32, u32), (TestInfo, u32)>;
+
 
 	let mut parts = Vec::new();
 	parts.push(&info[0..info.len()/4]);
@@ -27,8 +33,8 @@ pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
 	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
 
-	let tmp: Vec<HashMap::<(i32, u32), (TestInfo, u32)>> = parts.par_iter().map(|part|{
-		let mut ltmp = HashMap::<(i32, u32), (TestInfo, u32)>::new();
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
 		let _: Vec<()> = part.iter().map(|it| {
 		let ym = (it.date.year(), it.date.month());
 		match ltmp.get_mut(&ym) {
@@ -43,9 +49,7 @@ pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		}).collect();
 		ltmp}).collect();
 
-	println!("{}", tmp.len());
-
-	let mut tmp_rez = HashMap::<(i32, u32), (TestInfo, u32)>::new();
+	let mut tmp_rez = ResMap::new();
 
 	let _: Vec<()> = tmp.iter().map(|it|{
 		for (key, val) in it.iter() {
@@ -72,7 +76,7 @@ pub fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 	ret_vol
 }
 
-pub fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
+fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	let mut tmp = HashMap::<(i32, u32), (TestInfo, u32)>::new();
 
@@ -91,6 +95,59 @@ pub fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
 	).collect();
 
 	let mut ret_vol: Vec<TestInfo> = tmp.into_iter()
+				.map(|(_date, mut info)| {
+					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
+					info.0
+				})
+				.collect();
+
+	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
+	ret_vol
+}
+
+pub fn calc_mean_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<i32, (TestInfo, u32)>;
+
+
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
+		let _: Vec<()> = part.iter().map(|it| {
+		match ltmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						x.0.vol += it.vol;
+						x.1 += 1;
+					},
+			None => {
+					ltmp.insert(it.date.year(),(*it, 1));
+				}
+			};
+		}).collect();
+		ltmp}).collect();
+
+	let mut tmp_rez = ResMap::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						x.0.vol += val.0.vol;
+						x.1 += 1;
+					},
+			None => {
+					tmp_rez.insert(*key,(val.0, val.1));
+				}
+			};
+		};
+	}).collect();
+
+	let mut ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
 				.map(|(_date, mut info)| {
 					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
 					info.0
@@ -127,6 +184,56 @@ fn calc_mean_year(info: &[TestInfo]) -> Vec<TestInfo> {
 	ret_vol
 }
 
+fn calc_last_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<(i32, u32), TestInfo>;
+
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
+		let _: Vec<()> = part.iter().map(|it| {
+		let ym = (it.date.year(), it.date.month());
+		match ltmp.get_mut(&ym) {
+			Some(x) => {
+						if x.date.day() < it.date.day() {
+							*x = *it;
+						}
+						},
+			None => {
+					ltmp.insert(ym,*it);
+					}
+			};
+		}).collect();
+		ltmp}).collect();
+
+	let mut tmp_rez = ResMap::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						if x.date.day() < val.date.day() {
+							*x = *val;
+						}
+					},
+			None => {
+					tmp_rez.insert(*key, *val);
+				}
+			};
+		};
+	}).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
+				.map(|(_date, info)|info)
+				.collect();
+	ret_vol
+}
+
 fn calc_last_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	let mut tmp = HashMap::<(i32, u32), TestInfo>::new();
@@ -148,6 +255,65 @@ fn calc_last_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	let ret_vol: Vec<TestInfo> = tmp.into_iter()
 				.map(|(_date, info)| info)
+				.collect();
+	ret_vol
+}
+
+fn calc_last_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<i32, TestInfo>;
+
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
+		let _: Vec<()> = part.iter().map(|it| {
+		match ltmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						if x.date.month() == it.date.month() {
+							if x.date.day() < it.date.day() {
+								*x = *it;
+							}
+						}
+						if x.date.month() < it.date.month() {
+							*x = *it;
+						}
+						},
+			None => {
+					ltmp.insert(it.date.year(),*it);
+					}
+			};
+		}).collect();
+		ltmp}).collect();
+
+	let mut tmp_rez = ResMap::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						if x.date.month() == val.date.month() {
+							if x.date.day() < val.date.day() {
+								*x = *val;
+							}
+						}
+						if x.date.month() < val.date.month() {
+							*x = *val;
+						}
+					},
+			None => {
+					tmp_rez.insert(*key, *val);
+				}
+			};
+		};
+	}).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
+				.map(|(_date, info)|info)
 				.collect();
 	ret_vol
 }
@@ -181,6 +347,55 @@ fn calc_last_year (info: &[TestInfo]) -> Vec<TestInfo> {
 	ret_vol
 }
 
+fn calc_first_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<(i32, u32), TestInfo>;
+
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
+		let _: Vec<()> = part.iter().map(|it| {
+		let ym = (it.date.year(), it.date.month());
+		match ltmp.get_mut(&ym) {
+			Some(x) => {
+						if x.date.day() > it.date.day() {
+							*x = *it;
+						}
+						},
+			None => {
+					ltmp.insert(ym,*it);
+					}
+			};
+		}).collect();
+		ltmp}).collect();
+
+	let mut tmp_rez = ResMap::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						if x.date.day() > val.date.day() {
+							*x = *val;
+						}
+					},
+			None => {
+					tmp_rez.insert(*key, *val);
+				}
+			};
+		};
+	}).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
+				.map(|(_date, info)|info)
+				.collect();
+	ret_vol
+}
 
 fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
 
@@ -206,6 +421,65 @@ fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
 				.collect();
 	ret_vol
 
+}
+
+fn calc_first_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<i32, TestInfo>;
+
+	let mut parts = Vec::new();
+	parts.push(&info[0..info.len()/4]);
+	parts.push(&info[info.len()/4..info.len()/2]);
+	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
+	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+
+	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
+		let mut ltmp = ResMap::new();
+		let _: Vec<()> = part.iter().map(|it| {
+		match ltmp.get_mut(&it.date.year()) {
+			Some(x) => {
+						if x.date.month() == it.date.month() {
+							if x.date.day() > it.date.day() {
+								*x = *it;
+							}
+						}
+						if x.date.month() > it.date.month() {
+							*x = *it;
+						}
+						},
+			None => {
+					ltmp.insert(it.date.year(),*it);
+					}
+			};
+		}).collect();
+		ltmp}).collect();
+
+	let mut tmp_rez = ResMap::new();
+
+	let _: Vec<()> = tmp.iter().map(|it|{
+		for (key, val) in it.iter() {
+			match tmp_rez.get_mut(&*key) {
+			Some(x) => {
+						if x.date.month() == val.date.month() {
+							if x.date.day() > val.date.day() {
+								*x = *val;
+							}
+						}
+						if x.date.month() > val.date.month() {
+							*x = *val;
+						}
+					},
+			None => {
+					tmp_rez.insert(*key, *val);
+				}
+			};
+		};
+	}).collect();
+
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
+				.map(|(_date, info)|info)
+				.collect();
+	ret_vol
 }
 
 fn calc_first_year (info: &[TestInfo]) -> Vec<TestInfo> {
@@ -253,30 +527,54 @@ pub fn grouping(
 		MethodGroup::Mean => {
 			match time {
 				TimeInterval::Year => {
-					calc_mean_year(info)
+					if info.len() < 4096 {
+						calc_mean_year(info)
+					} else {
+						calc_mean_year_paral(info)
+					}
 				},
 				TimeInterval::Month => {
-					calc_mean_month(info)
+					if info.len() < 4096 {
+						calc_mean_month(info)
+					} else {
+						calc_mean_month_paral(info)
+					}
 				}
 			}
 		},
 		MethodGroup::Last => {
 			match time {
 				TimeInterval::Year => {
-					calc_last_year(info)
+					if info.len() < 4096 {
+						calc_last_year(info)
+					} else {
+						calc_last_year_paral(info)
+					}
 				},
 				TimeInterval::Month => {
-					calc_last_month(info)
+					if info.len() < 4096 {
+						calc_last_month(info)
+					} else {
+						calc_last_month_paral(info)
+					}
 				}
 			}
 		},
 		MethodGroup::First => {
 			match time {
 				TimeInterval::Year => {
-					calc_first_year(info)
+					if info.len() < 4096 {
+						calc_first_year(info)
+					} else {
+						calc_first_year_paral(info)
+					}
 				},
 				TimeInterval::Month => {
-					calc_first_month(info)
+					if info.len() < 4096 {
+						calc_first_month(info)
+					} else {
+						calc_first_month_paral(info)
+					}
 				}
 			}
 		}
