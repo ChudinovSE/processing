@@ -22,16 +22,26 @@ pub enum MethodGroup {
 	First,
 }
 
-fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
-
-	type ResMap = HashMap::<(i32, u32), (TestInfo, u32)>;
-
-
+fn slise_to_vec_parts (info: &[TestInfo]) -> Vec<&[TestInfo]> {
 	let mut parts = Vec::new();
 	parts.push(&info[0..info.len()/4]);
 	parts.push(&info[info.len()/4..info.len()/2]);
 	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
 	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	parts
+}
+
+fn ret_vec_month <T> (tmp_rez: &HashMap::<T, TestInfo>) -> Vec<TestInfo> {
+	tmp_rez.into_iter()
+				.map(|(_date, info)|*info)
+				.collect()
+}
+
+fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+
+	type ResMap = HashMap::<(i32, u32), (TestInfo, u32)>;
+
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -65,14 +75,13 @@ fn calc_mean_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let mut ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
 				.map(|(_date, mut info)| {
 					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
 					info.0
 				})
 				.collect();
 
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
 	ret_vol
 }
 
@@ -94,27 +103,21 @@ fn calc_mean_month (info: &[TestInfo]) -> Vec<TestInfo> {
 	}
 	).collect();
 
-	let mut ret_vol: Vec<TestInfo> = tmp.into_iter()
+	let ret_vol: Vec<TestInfo> = tmp.into_iter()
 				.map(|(_date, mut info)| {
 					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
 					info.0
 				})
 				.collect();
 
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
 	ret_vol
 }
 
-pub fn calc_mean_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
+fn calc_mean_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	type ResMap = HashMap::<i32, (TestInfo, u32)>;
 
-
-	let mut parts = Vec::new();
-	parts.push(&info[0..info.len()/4]);
-	parts.push(&info[info.len()/4..info.len()/2]);
-	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
-	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -147,14 +150,13 @@ pub fn calc_mean_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let mut ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
+	let ret_vol: Vec<TestInfo> = tmp_rez.into_par_iter()
 				.map(|(_date, mut info)| {
 					info.0.vol = info.0.vol.mean_vol(info.1 as f64);
 					info.0
 				})
 				.collect();
 
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
 	ret_vol
 }
 
@@ -188,11 +190,7 @@ fn calc_last_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	type ResMap = HashMap::<(i32, u32), TestInfo>;
 
-	let mut parts = Vec::new();
-	parts.push(&info[0..info.len()/4]);
-	parts.push(&info[info.len()/4..info.len()/2]);
-	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
-	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -228,10 +226,7 @@ fn calc_last_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
-				.map(|(_date, info)|info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp_rez)
 }
 
 fn calc_last_month (info: &[TestInfo]) -> Vec<TestInfo> {
@@ -253,21 +248,14 @@ fn calc_last_month (info: &[TestInfo]) -> Vec<TestInfo> {
 	}
 	).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp.into_iter()
-				.map(|(_date, info)| info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp)
 }
 
 fn calc_last_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	type ResMap = HashMap::<i32, TestInfo>;
 
-	let mut parts = Vec::new();
-	parts.push(&info[0..info.len()/4]);
-	parts.push(&info[info.len()/4..info.len()/2]);
-	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
-	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -312,10 +300,7 @@ fn calc_last_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
-				.map(|(_date, info)|info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp_rez)
 }
 
 fn calc_last_year (info: &[TestInfo]) -> Vec<TestInfo> {
@@ -341,21 +326,14 @@ fn calc_last_year (info: &[TestInfo]) -> Vec<TestInfo> {
 	}
 	).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp.into_iter()
-				.map(|(_date, info)| info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp)
 }
 
 fn calc_first_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	type ResMap = HashMap::<(i32, u32), TestInfo>;
 
-	let mut parts = Vec::new();
-	parts.push(&info[0..info.len()/4]);
-	parts.push(&info[info.len()/4..info.len()/2]);
-	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
-	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -391,10 +369,7 @@ fn calc_first_month_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
-				.map(|(_date, info)|info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp_rez)
 }
 
 fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
@@ -416,22 +391,14 @@ fn calc_first_month (info: &[TestInfo]) -> Vec<TestInfo> {
 	}
 	).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp.into_iter()
-				.map(|(_date, info)| info)
-				.collect();
-	ret_vol
-
+	ret_vec_month(&tmp)
 }
 
 fn calc_first_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 
 	type ResMap = HashMap::<i32, TestInfo>;
 
-	let mut parts = Vec::new();
-	parts.push(&info[0..info.len()/4]);
-	parts.push(&info[info.len()/4..info.len()/2]);
-	parts.push(&info[info.len()/2..info.len()/2 + info.len()/4]);
-	parts.push(&info[info.len()/2 + info.len()/4..info.len()]);
+	let parts = slise_to_vec_parts(info);
 
 	let tmp: Vec<ResMap> = parts.par_iter().map(|part|{
 		let mut ltmp = ResMap::new();
@@ -476,10 +443,7 @@ fn calc_first_year_paral (info: &[TestInfo]) -> Vec<TestInfo> {
 		};
 	}).collect();
 
-	let ret_vol: Vec<TestInfo> = tmp_rez.into_iter()
-				.map(|(_date, info)|info)
-				.collect();
-	ret_vol
+	ret_vec_month(&tmp_rez)
 }
 
 fn calc_first_year (info: &[TestInfo]) -> Vec<TestInfo> {
@@ -505,13 +469,7 @@ fn calc_first_year (info: &[TestInfo]) -> Vec<TestInfo> {
 	}
 	).collect();
 
-	let mut ret_vol: Vec<TestInfo> = tmp.into_iter()
-				.map(|(_date, info)| info)
-				.collect();
-
-	ret_vol.sort_by(|a, b| a.date.cmp(&b.date));
-
-	ret_vol
+	ret_vec_month(&tmp)
 }
 
 /// This function aggregation data from input vector for 
